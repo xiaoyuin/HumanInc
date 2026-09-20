@@ -1,6 +1,6 @@
 {
   "name": "human-inc",
-  "version": "0.1.2",
+  "version": "0.1.3",
   "gameRelease": {
     "name": "Contains traces of human",
     "note": "Carbon-based dependencies remain unresolved."

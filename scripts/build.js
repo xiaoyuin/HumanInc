@@ -3,11 +3,12 @@ import { copyFile, cp, mkdir, readFile, rm, writeFile } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
 const output = new URL('dist/', root);
-const assets = ['index.html', 'src/app.js', 'src/game.js', 'src/events.js', 'src/style.css', 'src/version.js'];
+const assets = ['index.html', 'src/app.js', 'src/game.js', 'src/events.js', 'src/style.css', 'src/version.js', 'src/i18n.js'];
 
 await rm(output, { recursive: true, force: true });
 await mkdir(new URL('src/', output), { recursive: true });
 await Promise.all(assets.map(file => copyFile(new URL(file, root), new URL(file, output))));
+await cp(new URL('src/locales/', root), new URL('src/locales/', output), { recursive: true });
 await cp(new URL('public/', root), output, { recursive: true });
 
 // Share metadata must be present before JavaScript runs. Pages is the default

@@ -2,7 +2,7 @@
 
 A workplace survival game. Everyone at the company is an AI Agent. You are the only human. Keep your cover, survive quarterly layoffs, and climb from Junior Associate to CEO.
 
-**English edition · v0.1.2 — Contains traces of human.**
+**中文 / English · v0.1.3 — Contains traces of human / 含微量人类.**
 
 Carbon-based dependencies remain unresolved.
 
@@ -22,7 +22,7 @@ To produce a static site, run `npm run build` and host the contents of `dist/`.
 
 The header displays the game version on desktop and mobile. The version comes from `package.json` → `version`; the release name and note come from `gameRelease`. Both `npm start` and `npm run build` generate `src/version.js` automatically. Do not edit the generated file.
 
-The English translation keeps version **0.1.2**. Game release versions and save-format versions are separate; updating the displayed version does not clear progress.
+Version **0.1.3** adds live Chinese/English switching. Game release versions and save-format versions are separate; updating the displayed version does not clear progress.
 
 For a future release, update the package metadata and this document. For example, `npm version patch --no-git-tag-version` updates both package files without creating a Git tag.
 
@@ -67,17 +67,26 @@ Browser icons and chat thumbnails are separate display surfaces. Share-card pres
 
 Saves are local to each browser and origin. A local server, `pages.dev`, and a custom domain do not share progress.
 
+## Language switching
+
+Use **中文 / EN** in the header on desktop or mobile. The choice is stored separately from game progress. On the first visit, a Chinese browser defaults to Chinese; other browsers default to English. A saved preference takes priority.
+
+Switching updates the interface, event choices, results, history, handbook, release copy and document title without restarting or reloading the game. It does not consume a choice, advance time, reshuffle events, or change stats and employee IDs. The selected language survives reloads and resignation. If browser storage is blocked, switching still works for the current page.
+
+`src/i18n.js` handles presentation. `src/locales/zh-ui.js` contains UI translations and `src/locales/zh-events.js` restores the original Chinese event copy. Both languages use one set of game mechanics and one shared save. Initial HTML share metadata remains English; the browser updates metadata to match the selected language after JavaScript runs.
+
 ## Existing Chinese saves
 
-The English edition keeps the same event IDs, options, effects, rank requirements, employee IDs, and save key. When loading an existing Chinese save, `restoreSave` updates the stored display copy to English in memory without changing progress or stats.
+Both languages keep the same event IDs, options, effects, rank requirements, employee IDs, and save key. When loading an existing Chinese save, `restoreSave` normalizes legacy display copy to the canonical English data in memory without changing progress or stats. The presentation layer then renders it in the selected language.
 
-`legacySubject` and `legacyTitle` in the event data are lookup keys for older saves, including saves created before event IDs were recorded. They are not shown in the English interface. Future decisions record both an event ID and a choice index.
+`legacySubject` and `legacyTitle` in the event data are lookup keys for older saves, including saves created before event IDs were recorded. They also let either language render saves created before choices had stable IDs. Future decisions record both an event ID and a choice index.
 
 ## Project files
 
 - `src/events.js`: 40 events, with 16 general events and 6 new events unlocked at each playable higher rank.
 - `src/game.js`: game state, quarterly reviews, promotions, employee IDs, and save restoration.
-- `src/app.js`: dashboard, organization, handbook, choices, results, and endings.
+- `src/app.js`: dashboard, organization, handbook, choices, results, endings, and language controls.
+- `src/i18n.js` and `src/locales/`: translations and presentation-only language switching.
 - `src/style.css`: responsive styling with locally available system fonts.
 - `scripts/build.js`: static build and share-URL configuration.
 - `scripts/version.js`: generated release metadata.
@@ -89,6 +98,6 @@ The English edition keeps the same event IDs, options, effects, rank requirement
 npm test
 ```
 
-Tests cover exposure, exhaustion, quarterly thresholds, promotions, victory, employee IDs, save compatibility, English copy, event scheduling, and viable full careers using real choices.
+Tests cover exposure, exhaustion, quarterly thresholds, promotions, victory, employee IDs, save compatibility, language preferences and translation consistency, event scheduling, and viable full careers using real choices.
 
 This is a local single-player game with authored events. It does not call a model API, require a backend account, or depend on a paid service.
