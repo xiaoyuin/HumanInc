@@ -3,6 +3,7 @@ artifacts/
 coverage/
 dist/
 .wrangler/
+src/version.js
 
 .env
 .env.*

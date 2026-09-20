@@ -3,6 +3,33 @@ import assert from 'node:assert/strict';
 import { events } from '../src/events.js';
 import { newGame, nextEvent, currentEvent, choose, advance, assess, continueQuarter, targetFor, validSave } from '../src/game.js';
 
+test('employee IDs change on restart even when the timestamp is identical', () => {
+  const first = newGame(42);
+  const restarted = newGame(42, first.employeeId);
+  assert.match(first.employeeId, /^YOU-\d{3}$/);
+  assert.match(restarted.employeeId, /^YOU-\d{3}$/);
+  assert.notEqual(restarted.employeeId, first.employeeId);
+  assert.equal(restarted.seed, first.seed);
+  assert.notEqual(newGame(41, 'YOU-042').employeeId, 'YOU-042');
+});
+
+test('employee IDs persist across decisions, quarters and save restoration', () => {
+  let state = nextEvent(newGame(42));
+  const id = state.employeeId;
+  assert.equal(typeof id, 'string');
+  state = advance(choose(state, 0));
+  assert.equal(state.employeeId, id);
+  state.stats.performance = 100;
+  state = continueQuarter(assess(state));
+  assert.equal(state.employeeId, id);
+  const restored = JSON.parse(JSON.stringify(state));
+  assert.equal(validSave(restored), true);
+  assert.equal(restored.employeeId, id);
+  delete restored.employeeId;
+  assert.equal(validSave(restored), true, 'old saves remain compatible');
+  assert.equal(validSave({ ...restored, employeeId: '<invalid>' }), false);
+});
+
 test('onboarding always starts with a playable standup', () => {
   const state = nextEvent(newGame(42));
   assert.equal(currentEvent(state).id, 'standup');

@@ -3,10 +3,14 @@ import { events } from './events.js';
 export const LEVELS = ['初级职员', '高级职员', '团队主管', '部门总监', '副总裁', 'CEO'];
 export const STAT_NAMES = { performance: '绩效', trust: '信任', exposure: '暴露', energy: '精力' };
 export const SAVE_KEY = 'human-inc-save-v1';
+export const employeeIdFor = state => state?.employeeId || 'YOU-042';
 const clamp = value => Math.max(0, Math.min(100, value));
 
-export function newGame(seed = Date.now()) {
-  return { version: 1, seed: seed >>> 0, phase: 'playing', level: 0, quarter: 1, month: 1, tenure: 0, stats: { performance: 45, trust: 55, exposure: 12, energy: 78 }, queue: [], eventId: null, history: [], lastResult: null, assessment: null, reason: null };
+export function newGame(seed = Date.now(), previousEmployeeId = null) {
+  let number = (seed >>> 0) % 999 + 1;
+  const formatId = value => `YOU-${String(value).padStart(3, '0')}`;
+  if (formatId(number) === previousEmployeeId) number = number % 999 + 1;
+  return { version: 1, employeeId: formatId(number), seed: seed >>> 0, phase: 'playing', level: 0, quarter: 1, month: 1, tenure: 0, stats: { performance: 45, trust: 55, exposure: 12, energy: 78 }, queue: [], eventId: null, history: [], lastResult: null, assessment: null, reason: null };
 }
 
 function random(state) {
@@ -116,6 +120,7 @@ export function continueQuarter(state) {
 
 export function validSave(value) {
   if (!value || value.version !== 1 || !['playing', 'result', 'assessment', 'won', 'fired'].includes(value.phase)) return false;
+  if (value.employeeId !== undefined && (typeof value.employeeId !== 'string' || !/^YOU-\d{3}$/.test(value.employeeId))) return false;
   if (!Number.isInteger(value.level) || value.level < 0 || value.level >= LEVELS.length) return false;
   if (!Number.isInteger(value.quarter) || value.quarter < 1 || value.quarter > 10 || ![1, 2, 3].includes(value.month) || ![0, 1].includes(value.tenure)) return false;
   if (!Number.isInteger(value.seed) || value.seed < 0 || value.seed > 0xffffffff) return false;

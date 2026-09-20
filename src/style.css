@@ -12,4 +12,7 @@
 .reset-modal .resign-joke{padding:12px;border-left:2px solid #b9c59f;background:#f0f4e8;line-height:1.9;margin-bottom:15px}.reset-modal #reset-description{line-height:1.9}
 .reset-modal>div{flex-wrap:wrap}.reset-modal>div>button{flex:1;white-space:nowrap}
 @media(max-width:640px){.resign-button{min-height:36px;margin-left:12px;padding:7px 10px;font-size:10px;gap:5px}.reset-modal{padding:24px}.reset-modal>div{gap:10px}}
+.game-version{display:flex;flex-direction:column;gap:4px;white-space:nowrap}.game-version strong{font-size:11px;font-weight:600;color:#64764e;letter-spacing:.2px}.game-version small{font-size:8px;color:#8b987b}
+@media(max-width:1000px){.topbar .system-status{display:none}}
+@media(max-width:640px){.topbar .breadcrumb{display:none}.topbar-right{width:100%;justify-content:space-between}.game-version strong{font-size:10px}.game-version small{font-size:8px}.game-version{gap:3px}}
 @media(prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}

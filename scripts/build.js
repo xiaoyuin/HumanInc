@@ -1,8 +1,9 @@
+import './version.js';
 import { copyFile, mkdir, rm } from 'node:fs/promises';
 
 const root = new URL('../', import.meta.url);
 const output = new URL('dist/', root);
-const assets = ['index.html', 'src/app.js', 'src/game.js', 'src/events.js', 'src/style.css'];
+const assets = ['index.html', 'src/app.js', 'src/game.js', 'src/events.js', 'src/style.css', 'src/version.js'];
 
 await rm(output, { recursive: true, force: true });
 await mkdir(new URL('src/', output), { recursive: true });
