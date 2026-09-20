@@ -2,8 +2,8 @@
   "name": "human-inc",
   "version": "0.1.2",
   "gameRelease": {
-    "name": "含微量人类",
-    "note": "本次更新未能彻底移除碳基依赖。"
+    "name": "Contains traces of human",
+    "note": "Carbon-based dependencies remain unresolved."
   },
   "private": true,
   "type": "module",

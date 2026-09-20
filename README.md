@@ -1,92 +1,94 @@
 # Human, Inc.
 
-一个中文职场生存网页游戏：在全是 Agent 的公司里假装自己也是 Agent，活过季度 IBU 裁员，从初级职员升到 CEO。
+A workplace survival game. Everyone at the company is an AI Agent. You are the only human. Keep your cover, survive quarterly layoffs, and climb from Junior Associate to CEO.
 
-## 运行
+**English edition · v0.1.2 — Contains traces of human.**
 
-需要 Node.js 18 或以上，无需安装依赖。
+Carbon-based dependencies remain unresolved.
+
+## Run locally
+
+Node.js 18 or later is sufficient to run the game. No dependency installation is required for the local server.
 
 ```sh
 npm start
 ```
 
-访问 http://localhost:3000。可通过 `PORT=8080 npm start` 修改端口。也可以运行 `npm run build`，将生成的 `dist/` 目录部署到任何静态网站托管服务。
+Open http://localhost:3000. Use `PORT=8080 npm start` to select another port.
 
-## 游戏版本
+To produce a static site, run `npm run build` and host the contents of `dist/`.
 
-当前版本：**v0.1.2 · 含微量人类**。本次更新未能彻底移除碳基依赖。
+## Release information
 
-电脑和手机顶栏均显示当前游戏版本。版本号读取 `package.json` 的 `version`，版本代号和说明读取 `gameRelease`。`npm start` 和 `npm run build` 会自动生成前端版本信息，不需要手工修改 `src/version.js`。
+The header displays the game version on desktop and mobile. The version comes from `package.json` → `version`; the release name and note come from `gameRelease`. Both `npm start` and `npm run build` generate `src/version.js` automatically. Do not edit the generated file.
 
-发布新版本时更新上述字段及本节说明；例如运行 `npm version patch --no-git-tag-version` 可将版本升至 `0.1.3`，并同步锁文件。游戏版本与存档格式版本独立，升级显示版本不会清空进度。
+The English translation keeps version **0.1.2**. Game release versions and save-format versions are separate; updating the displayed version does not clear progress.
 
-## 部署到 Cloudflare Workers
+For a future release, update the package metadata and this document. For example, `npm version patch --no-git-tag-version` updates both package files without creating a Git tag.
 
-项目使用 [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)，由 Cloudflare 直接托管静态文件，无需运行 `server.js` 或配置数据库。`npm run build` 将网页及其依赖复制到 `dist/`。
+## Deploy to Cloudflare Pages
 
-在 Cloudflare 的 **Workers & Pages** 中创建 Worker，连接 GitHub 仓库 `xiaoyuin/HumanInc`，配置如下：
+The active site is [humaninc.pages.dev](https://humaninc.pages.dev/). In Cloudflare Pages, connect the GitHub repository `xiaoyuin/HumanInc` with these settings:
 
-| 配置 | 值 |
+| Setting | Value |
 | --- | --- |
-| Worker 名称 | `humaninc`（须与 `wrangler.jsonc` 的 `name` 一致） |
-| 生产分支 | `main` |
-| 根目录 | 仓库根目录，保留默认值 |
-| 构建命令 | `npm run build` |
-| 部署命令 | `npx wrangler deploy` |
+| Production branch | `main` |
+| Framework preset | None |
+| Root directory | Repository root; leave the default |
+| Build command | `npm run build` |
+| Build output directory | `dist` |
 
-静态资源目录已在 `wrangler.jsonc` 中设置为 `./dist`，无需另外填写 Pages 的输出目录。Workers Builds 会根据 `package-lock.json` 安装开发依赖中的 Wrangler。部署工具需要 Node.js 22 或以上；Cloudflare 的构建环境请使用满足要求的版本。
+Use Node.js 22 or later for Cloudflare tooling. Pages publishes the static build output automatically; it does not run `server.js`. The repository retains the previous Workers configuration and deploy script for compatibility, but the active deployment uses Pages.
 
-如果已经创建了其他名称的 Worker，请同步修改 `wrangler.jsonc` 的 `name`。部署完成后使用控制台给出的 `workers.dev` 地址访问；连接的生产分支后续推送会触发自动部署。[Workers Builds 配置说明](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+The build includes the generated release metadata and all public icons. Connected production-branch pushes trigger Pages builds. Local edits and local commits are not published until pushed.
 
-也可以在本地登录 Cloudflare 后部署：
+## Sharing and icons
 
-```sh
-npm ci
-npx wrangler login
-npm run deploy
-```
+The default public URL is `https://humaninc.pages.dev/`. The initial HTML contains English Open Graph and Twitter Card titles, descriptions, and the green **hi** share image. Share metadata can be read without running JavaScript.
 
-上线后，游戏存档仍只保存在当前浏览器和域名下；本地开发地址、`workers.dev` 地址与自定义域名的存档互相独立。
+- `public/favicon.svg` is the vector source, used by both the in-game logo and the browser SVG icon.
+- `public/assets/hi.png` is the 512 × 512 share image. The smaller PNGs and ICO use the same artwork.
+- `npm run build` copies the contents of `public/` into the root of `dist/`.
+- Set the build variable `SITE_URL` to use another public origin. The build updates canonical, Open Graph, and share-image URLs together.
 
-## 链接分享与图标
+Browser icons and chat thumbnails are separate display surfaces. Share-card presentation depends on the receiving app; generic metadata is not a WeChat JS-SDK integration.
 
-分享主地址为 `https://humaninc.pages.dev/`。页面初始 HTML 中包含 Open Graph 和 Twitter Card 标题、描述，以及绿色 **hi** 方形分享图。浏览器图标提供 SVG、PNG、ICO 和 Apple Touch Icon，均为可直接访问的独立文件。
+## How to play
 
-- `public/favicon.svg` 是图标的矢量源文件，主页左上角和浏览器矢量图标共用此文件。
-- `public/assets/hi.png` 是 512 × 512 的分享图；其他 PNG 和 ICO 是其缩小版本。
-- `npm run build` 会将 `public/` 的内容复制到 `dist/` 根目录。
-- 如需使用其他分享主域名，在构建环境设置 `SITE_URL`（例如 `https://example.com`）；构建会同步替换 canonical、Open Graph 和分享图的域名。
+- Each quarter contains 3 events. Pick one of three responses; the base stat changes are shown before you choose.
+- There are 40 events and 120 choices. A new 30-decision career does not repeat events. From Senior Associate onward, at least 3 of each rank's 6 decisions feature newly unlocked duties.
+- The quarterly performance threshold starts at 60 and rises by 5 per rank. Trust must be at least 25 to pass an IBU.
+- Exposure reaching 100 reveals your human identity and ends the run immediately.
+- A decision that leaves Energy at zero adds 18 extra Exposure and removes 10 Performance.
+- Passing a quarter restores 24 Energy, reduces Exposure by 8, and resets Performance to 45. Trust carries over.
+- Survive 2 quarters per rank to earn a promotion. Become CEO after 10 quarters to win.
+- Accepting an offer or restarting after an ending assigns a new employee ID. Reloading and continuing a run preserve it. Older saves retain `YOU-042`.
+- The game saves in the current browser. **Resign** clears the active run and returns to onboarding. Accept the offer again to start a new run. Canceling resignation preserves all progress.
 
-分享信息无需运行 JavaScript 即可读取。[Open Graph 协议说明](https://ogp.me/)
+Saves are local to each browser and origin. A local server, `pages.dev`, and a custom domain do not share progress.
 
-微信中的实际卡片样式仍需发布后在客户端测试；补充通用分享标签不等于已经接入微信 JS-SDK，也不保证所有分享方式都会展示描述。浏览器标签页图标和聊天分享缩略图是不同的展示位置。
+## Existing Chinese saves
 
-## 玩法
+The English edition keeps the same event IDs, options, effects, rank requirements, employee IDs, and save key. When loading an existing Chinese save, `restoreSave` updates the stored display copy to English in memory without changing progress or stats.
 
-- 每季度 3 次事件，每次选择一个回应；选项提前显示数值变化。
-- 事件库共 40 个事件、120 个选项。新的一局 30 次决策不重复事件；高级职员起，每个职级的 6 次决策中至少 3 次是该职级新解锁的事件。
-- 绩效门槛从 60 开始，每个职级增加 5；信任必须至少 25 才能通过 IBU。
-- 暴露达到 100，立刻因人类身份被解雇。
-- 精力耗尽的决策额外增加 18 暴露、扣除 10 绩效。
-- 通过季度后恢复 24 精力、减少 8 暴露，绩效重置为 45，信任保留。
-- 每个职级存活 2 个季度后晋升，10 个季度成为 CEO 即通关。
-- 接受 Offer 或结局重开时分配新工号，刷新和继续游戏时保留；旧存档沿用 `YOU-042`。
-- 当前浏览器自动存档。游戏中可随时点击顶栏的“辞职”按钮，确认后清空当前存档并返回接受 Offer 前的入职页，再次接受 Offer 才开始新的一局；取消辞职会保留全部进度。电脑和手机均支持。
+`legacySubject` and `legacyTitle` in the event data are lookup keys for older saves, including saves created before event IDs were recorded. They are not shown in the English interface. Future decisions record both an event ID and a choice index.
 
-## 项目结构
+## Project files
 
-- `src/game.js`：独立游戏状态机、晋升和裁员规则、存档校验。
-- `src/events.js`：40 个原创中文事件，共 120 个选项。16 个通用事件；高级职员、团队主管、部门总监、副总裁各解锁 6 个事件。
-- `src/app.js`：工作台、组织架构、员工手册、决策与结局界面。
-- `src/style.css`：响应式布局；无需网络字体或外部资源。
-- `server.js`：本地开发静态服务器。
+- `src/events.js`: 40 events, with 16 general events and 6 new events unlocked at each playable higher rank.
+- `src/game.js`: game state, quarterly reviews, promotions, employee IDs, and save restoration.
+- `src/app.js`: dashboard, organization, handbook, choices, results, and endings.
+- `src/style.css`: responsive styling with locally available system fonts.
+- `scripts/build.js`: static build and share-URL configuration.
+- `scripts/version.js`: generated release metadata.
+- `server.js`: local static server.
 
-## 验证
+## Verification
 
 ```sh
 npm test
 ```
 
-测试覆盖立即暴露、精力耗尽、季度绩效与信任门槛、晋升、通关、旧存档兼容、事件去重与职级分配，以及使用真实选项完成 30 次决策的可行路线。
+Tests cover exposure, exhaustion, quarterly thresholds, promotions, victory, employee IDs, save compatibility, English copy, event scheduling, and viable full careers using real choices.
 
-这是本地单人原型，事件是预先编写的，不依赖大模型 API、后端账户或付费服务。
+This is a local single-player game with authored events. It does not call a model API, require a backend account, or depend on a paid service.

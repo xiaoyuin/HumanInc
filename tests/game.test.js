@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { events } from '../src/events.js';
-import { newGame, nextEvent, currentEvent, choose, advance, assess, continueQuarter, targetFor, validSave } from '../src/game.js';
+import { newGame, nextEvent, currentEvent, choose, advance, assess, continueQuarter, targetFor, validSave, restoreSave } from '../src/game.js';
 
 test('employee IDs change on restart even when the timestamp is identical', () => {
   const first = newGame(42);
@@ -192,6 +192,45 @@ test('older saves retain progress and exclude previously played subjects from fu
   assert.ok(next.queue.includes('camera'));
   assert.ok(!next.queue.includes('ceo_shortlist'));
   assert.equal(validSave(next), true);
+});
+
+test('Chinese saves restore in English without losing identity, stats or decisions', () => {
+  const event = events.find(event => event.id === 'standup');
+  const chinese = choose(nextEvent(newGame(42)), 1);
+  chinese.history[0].subject = event.legacySubject;
+  chinese.history[0].choice = event.options[1].legacyTitle;
+  chinese.history[0].result = '旧的中文回执';
+  delete chinese.history[0].eventId;
+  delete chinese.history[0].choiceIndex;
+  chinese.lastResult.title = event.options[1].legacyTitle;
+  chinese.lastResult.text = '旧的中文回执';
+  const before = structuredClone(chinese);
+  const restored = restoreSave(chinese);
+  assert.deepEqual(chinese, before, 'migration does not mutate its input');
+  for (const key of ['stats', 'seed', 'queue', 'employeeId', 'phase', 'quarter', 'month', 'level', 'tenure']) assert.deepEqual(restored[key], chinese[key]);
+  assert.equal(restored.history.length, 1);
+  assert.equal(restored.history[0].eventId, event.id);
+  assert.equal(restored.history[0].choiceIndex, 1);
+  assert.equal(restored.history[0].subject, event.subject);
+  assert.equal(restored.history[0].choice, event.options[1].title);
+  assert.equal(restored.lastResult.text, event.options[1].result);
+  assert.deepEqual(restored.lastResult.effects, chinese.lastResult.effects);
+  assert.deepEqual(restoreSave(restored), restored, 'migration is idempotent');
+  const next = advance(restored);
+  assert.notEqual(next.eventId, 'standup');
+  assert.ok(!next.queue.includes('standup'));
+  assert.equal(restoreSave(null), null);
+});
+
+test('all player-facing event copy is English and retains legacy save lookup keys', () => {
+  for (const event of events) {
+    for (const key of ['subject', 'text', 'quote', 'category', 'role']) assert.doesNotMatch(event[key], /\p{Script=Han}/u, `${event.id}.${key}`);
+    assert.ok(event.legacySubject);
+    for (const option of event.options) {
+      for (const key of ['title', 'detail', 'result']) assert.doesNotMatch(option[key], /\p{Script=Han}/u, `${event.id}.${key}`);
+      assert.ok(option.legacyTitle);
+    }
+  }
 });
 
 // Explore real decisions across each quarter to verify a viable route to CEO
