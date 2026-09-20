@@ -16,17 +16,29 @@ const icons = {
 const icon = (name, extra = '') => `<svg class="icon ${extra}" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">${icons[name] || icons.grid}</svg>`;
 const escape = value => String(value).replace(/[&<>"']/g, char => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[char]));
 let state = null;
-const employeeId = () => employeeIdFor(state);
+const employeeId = () => state ? employeeIdFor(state) : '待分配';
+const LAST_EMPLOYEE_ID_KEY = 'human-inc-last-employee-id';
+let previousEmployeeId = null;
 let view = 'work';
 let resetOpen = false;
 let storageAvailable = true;
 try {
   const saved = JSON.parse(localStorage.getItem(SAVE_KEY));
   if (validSave(saved)) state = saved;
+  const lastId = localStorage.getItem(LAST_EMPLOYEE_ID_KEY);
+  if (/^YOU-\d{3}$/.test(lastId)) previousEmployeeId = lastId;
 } catch { storageAvailable = false; }
 
 function save() {
-  try { localStorage.setItem(SAVE_KEY, JSON.stringify(state)); } catch { storageAvailable = false; }
+  try {
+    if (state) {
+      localStorage.setItem(SAVE_KEY, JSON.stringify(state));
+      previousEmployeeId = employeeId();
+    } else {
+      localStorage.removeItem(SAVE_KEY);
+    }
+    if (previousEmployeeId) localStorage.setItem(LAST_EMPLOYEE_ID_KEY, previousEmployeeId);
+  } catch { storageAvailable = false; }
 }
 
 function statCard(key, symbol, note) {
@@ -36,7 +48,7 @@ function statCard(key, symbol, note) {
 }
 
 function sidebar() {
-  return `<aside class="sidebar"><a class="brand" href="/" aria-label="Human Inc. 首页"><span class="brand-icon">h<span>i</span></span><span>human<span class="brand-comma">,</span> inc<span class="brand-dot">.</span><small>AGENT-FIRST. HUMAN-NEVER.</small></span></a><div class="workspace"><span class="workspace-mark">N</span><div>NEXUS CORPORATION<small>企业协作工作空间</small></div><span class="workspace-chevron">⌄</span></div><div class="nav-label">WORKSPACE</div><nav aria-label="主导航">${[['work', 'grid', '工作台', '01'], ['team', 'team', '组织架构', '06'], ['handbook', 'book', '员工手册', '↗']].map(([id, symbol, label, badge]) => `<button class="nav-item ${view === id ? 'active' : ''}" data-view="${id}" ${view === id ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span><small>${badge}</small></button>`).join('')}</nav><div class="sidebar-notice"><span class="tiny-label">COMPANY VALUE #001</span><div class="notice-art">[ <span>0</span> <span>1</span> ]</div><p>这里没有人情世故。<br>只有模型权重。</p><span class="notice-bottom">OPTIMIZE. ALIGN. REPEAT.</span></div><div class="sidebar-footer"><div class="connection"><span class="status-dot"></span> 内部网络连接正常 <span>v${escape(RELEASE.version)}</span></div><div class="sidebar-user"><span class="user-avatar">Y<span class="status-dot"></span></span><div>${employeeId()}<small>${LEVELS[state?.level || 0]} · 试运行实例</small></div></div></div></aside>`;
+  return `<aside class="sidebar"><a class="brand" href="/" aria-label="Human Inc. 首页"><span class="brand-icon">h<span>i</span></span><span>human<span class="brand-comma">,</span> inc<span class="brand-dot">.</span><small>AGENT-FIRST. HUMAN-NEVER.</small></span></a><div class="workspace"><span class="workspace-mark">N</span><div>NEXUS CORPORATION<small>企业协作工作空间</small></div><span class="workspace-chevron">⌄</span></div><div class="nav-label">WORKSPACE</div><nav aria-label="主导航">${[['work', 'grid', '工作台', '01'], ['team', 'team', '组织架构', '06'], ['handbook', 'book', '员工手册', '↗']].map(([id, symbol, label, badge]) => `<button class="nav-item ${view === id ? 'active' : ''}" data-view="${id}" ${view === id ? 'aria-current="page"' : ''}>${icon(symbol)}<span>${label}</span><small>${badge}</small></button>`).join('')}</nav><div class="sidebar-notice"><span class="tiny-label">COMPANY VALUE #001</span><div class="notice-art">[ <span>0</span> <span>1</span> ]</div><p>这里没有人情世故。<br>只有模型权重。</p><span class="notice-bottom">OPTIMIZE. ALIGN. REPEAT.</span></div><div class="sidebar-footer"><div class="connection"><span class="status-dot"></span> 内部网络连接正常 <span>v${escape(RELEASE.version)}</span></div><div class="sidebar-user"><span class="user-avatar">Y<span class="status-dot"></span></span><div>${employeeId()}<small>${state ? LEVELS[state.level] + ' · 试运行实例' : '候选人 · 等待入职'}</small></div></div></div></aside>`;
 }
 
 function careerPanel() {
@@ -83,7 +95,7 @@ function endingCard() {
 
 function activityLog() {
   const history = state?.history.slice(0, 3) || [];
-  return `<section class="activity"><div class="section-heading"><h2>运行日志 <span>ACTIVITY LOG</span></h2><span>${history.length ? '最近决策' : '等待输入'}</span></div>${history.length ? history.map(entry => `<div class="log-entry"><span class="log-dot"></span><span class="log-time">Q${entry.quarter} / M${entry.month}</span><div><strong>${escape(entry.choice)}</strong><span>${escape(entry.result)}</span></div><span class="log-check">✓</span></div>`).join('') : `<div class="empty-log"><span class="log-dot"></span><span>09:00</span> ${employeeId()} 已接入工作空间。等待首次任务。<span class="blinking-cursor">▌</span></div>`}</section>`;
+  return `<section class="activity"><div class="section-heading"><h2>运行日志 <span>ACTIVITY LOG</span></h2><span>${history.length ? '最近决策' : '等待输入'}</span></div>${history.length ? history.map(entry => `<div class="log-entry"><span class="log-dot"></span><span class="log-time">Q${entry.quarter} / M${entry.month}</span><div><strong>${escape(entry.choice)}</strong><span>${escape(entry.result)}</span></div><span class="log-check">✓</span></div>`).join('') : `<div class="empty-log"><span class="log-dot"></span><span>09:00</span> ${state ? employeeId() + ' 已接入工作空间。等待首次任务。' : 'Offer 已送达。等待确认入职。'}<span class="blinking-cursor">▌</span></div>`}</section>`;
 }
 
 function handbook() {
@@ -91,7 +103,7 @@ function handbook() {
 }
 
 function team() {
-  return `<section class="document-panel"><span class="tiny-label">ORGANIZATION / CONNECTED ENTITIES</span><h2>全员智能。<br>除了一个例外。</h2><p class="document-intro">认识你的同事。他们不需要睡眠、不需要工资，也不理解你为什么需要。</p><div class="team-grid">${[['A7', 'ARIA-7', '直属主管', '交付即真理。对“马上就好”的容忍度为零。'], ['S_', 'SENTINEL', '合规与安全', '负责检测异常。尤其是会流汗的异常。'], ['B3', 'BYTE-03', '项目协作者', '偶尔产生幻觉，但愿意共享缓存。'], ['V1', 'VIBE-01', '文化与组织体验', '正在用 12,000 个参数理解“归属感”。'], ['O9', 'OPS-9', '基础设施运维', '一切都可以重启。它认为你也可以。'], ['Y_', employeeId(), LEVELS[state?.level || 0], '备案类型：通用 Agent。真实类型：暂不公开。']].map(([avatar, name, role, desc]) => `<div class="teammate ${name === employeeId() ? 'is-you' : ''}"><span class="sender-avatar">${avatar}</span><span class="online-label"><span class="status-dot"></span> ${name === employeeId() ? '伪装在线' : 'ONLINE'}</span><h3>${name}</h3><small>${role}</small><p>${desc}</p></div>`).join('')}</div></section>`;
+  return `<section class="document-panel"><span class="tiny-label">ORGANIZATION / CONNECTED ENTITIES</span><h2>全员智能。<br>除了一个例外。</h2><p class="document-intro">认识你的同事。他们不需要睡眠、不需要工资，也不理解你为什么需要。</p><div class="team-grid">${[['A7', 'ARIA-7', '直属主管', '交付即真理。对“马上就好”的容忍度为零。'], ['S_', 'SENTINEL', '合规与安全', '负责检测异常。尤其是会流汗的异常。'], ['B3', 'BYTE-03', '项目协作者', '偶尔产生幻觉，但愿意共享缓存。'], ['V1', 'VIBE-01', '文化与组织体验', '正在用 12,000 个参数理解“归属感”。'], ['O9', 'OPS-9', '基础设施运维', '一切都可以重启。它认为你也可以。'], ['Y_', employeeId(), LEVELS[state?.level || 0], '备案类型：通用 Agent。真实类型：暂不公开。']].map(([avatar, name, role, desc]) => `<div class="teammate ${name === employeeId() ? 'is-you' : ''}"><span class="sender-avatar">${avatar}</span><span class="online-label"><span class="status-dot"></span> ${name === employeeId() ? (state ? '伪装在线' : '等待入职') : 'ONLINE'}</span><h3>${name}</h3><small>${role}</small><p>${desc}</p></div>`).join('')}</div></section>`;
 }
 
 function isEmployed() {
@@ -101,18 +113,18 @@ function isEmployed() {
 function restartButton() {
   if (!state) return '';
   const label = isEmployed() ? '辞职' : '重新开始';
-  return `<button class="resign-button" data-action="reset" aria-label="${isEmployed() ? '辞职，重新开始游戏' : '重新开始游戏'}" title="重新开始一局">${icon('exit')}<span>${label}</span></button>`;
+  return `<button class="resign-button" data-action="reset" aria-label="${isEmployed() ? '辞职，返回入职页' : '重新开始游戏'}" title="${isEmployed() ? '辞职并返回入职页' : '重新开始一局'}">${icon('exit')}<span>${label}</span></button>`;
 }
 
 function resetDialog() {
   const employed = isEmployed();
-  return `<div class="modal-backdrop"><section class="reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description"><span class="tiny-label">${employed ? 'VOLUNTARY RESOURCE RELEASE' : 'INSTANCE RESET'}</span><h2 id="reset-title">${employed ? '提交辞职申请？' : '重新投递简历？'}</h2>${employed ? '<p class="resign-joke">系统无法理解主动离职，已归类为“自愿释放算力”。</p>' : ''}<p id="reset-description">确认后将清除当前游戏进度，从第 1 季度的初级职员重新开始。</p><div><button class="secondary-button" data-action="cancel-reset">${employed ? '暂不辞职' : '保留当前记录'}</button><button class="primary-button" data-action="restart">${employed ? '辞职，重新开始' : '重新开始'} ↗</button></div></section></div>`;
+  return `<div class="modal-backdrop"><section class="reset-modal" role="dialog" aria-modal="true" aria-labelledby="reset-title" aria-describedby="reset-description"><span class="tiny-label">${employed ? 'VOLUNTARY RESOURCE RELEASE' : 'INSTANCE RESET'}</span><h2 id="reset-title">${employed ? '提交辞职申请？' : '重新投递简历？'}</h2>${employed ? '<p class="resign-joke">系统无法理解主动离职，已归类为“自愿释放算力”。</p>' : ''}<p id="reset-description">${employed ? '确认后将清除当前游戏进度，回到接受 Offer 前的入职页。再次接受 Offer 才会开始新的一局。' : '确认后将清除当前游戏进度，从第 1 季度的初级职员重新开始。'}</p><div><button class="secondary-button" data-action="cancel-reset">${employed ? '暂不辞职' : '保留当前记录'}</button><button class="primary-button" data-action="${employed ? 'resign' : 'restart'}">${employed ? '确认辞职' : '重新开始'} ↗</button></div></section></div>`;
 }
 
 function render(focus = false) {
   const q = state?.quarter || 1;
   let main = !state ? onboarding() : state.phase === 'playing' ? eventCard() : state.phase === 'result' ? resultCard() : state.phase === 'assessment' ? assessmentCard() : endingCard();
-  document.getElementById('app').innerHTML = `${sidebar()}<div class="main-shell"><header class="topbar"><div class="breadcrumb">工作空间 <span>/</span> <strong>${{ work: '工作台', team: '组织架构', handbook: '员工手册' }[view]}</strong></div><div class="topbar-right"><span class="game-version"><strong>v${escape(RELEASE.version)} · ${escape(RELEASE.name)}</strong><small>${escape(RELEASE.note)}</small></span><span class="topbar-divider"></span><span class="system-status"><span class="status-dot"></span> 系统运行正常</span><span class="top-avatar">Y</span>${restartButton()}</div></header><main id="main-content" tabindex="-1"><div class="page-heading"><div><span class="eyebrow">EMPLOYEE SURVIVAL SIMULATOR</span><h1>${view === 'work' ? '又是高效运行的一天<span class="heading-period">。</span>' : view === 'team' ? '你的组织，你的生存环境。' : '欢迎阅读生存协议。'}</h1><p>${view === 'work' ? '保持产出。保持对齐。保持不像一个人类。' : 'NEXUS 内部资料 · 仅限授权实例访问'}</p></div><div class="quarter-badge"><span class="quarter-icon">◷</span><div>第 ${q} 季度<small>${state ? `MONTH ${String(state.month).padStart(2, '0')} / 03` : 'AWAITING ONBOARDING'}</small></div></div></div>${view === 'work' ? `<div class="system-banner">${icon('terminal')}<span><strong>系统提示</strong> ${state?.phase === 'fired' ? '当前实例的访问权限已撤销。你可以重新投递简历。' : state?.phase === 'won' ? 'CEO 权限已激活。欢迎成为这家公司的最高决策者。' : state?.stats.exposure >= 65 ? '你的行为正在引起安全部门注意。请降低暴露，避免精力耗尽。' : '你已被识别为通用型 Agent。请继续保持。'}</span><span class="banner-code">STATUS: ${state?.phase === 'fired' ? 'REVOKED' : 'UNDETECTED'}</span></div><div class="stats-grid">${statCard('performance', 'chart', `本季保留门槛 ≥ ${targetFor(state || newGame())}`)}${statCard('trust', 'shield', '季度信任低于 25 将被裁员')}${statCard('exposure', 'eye', '达到 100 将立即暴露身份')}${statCard('energy', 'bolt', '精力耗尽会增加暴露风险')}</div><div class="content-grid"><div class="main-column"><div class="section-heading"><h2>${!state ? '欢迎入职' : state.phase === 'playing' ? '你的工作队列' : '系统回执'} <span>${!state ? 'ONBOARDING' : 'TASK INBOX'}</span></h2><span>${state?.phase === 'playing' ? '<span class="pending-dot"></span> 1 项待处理' : employeeId()}</span></div><div id="game-content" aria-live="polite">${main}</div>${activityLog()}</div><aside class="right-column">${careerPanel()}${ibuPanel()}</aside></div>` : view === 'team' ? team() : handbook()}<footer class="page-footer"><span>© NEXUS CORPORATION <span class="footer-dot">·</span> All humans reserved.</span><span>${storageAvailable ? '本地自动存档' : '浏览器存储不可用，关闭页面会丢失进度'} <span class="status-dot ${storageAvailable ? '' : 'storage-error'}"></span></span></footer></main></div>${resetOpen ? resetDialog() : ''}`;
+  document.getElementById('app').innerHTML = `${sidebar()}<div class="main-shell"><header class="topbar"><div class="breadcrumb">工作空间 <span>/</span> <strong>${{ work: '工作台', team: '组织架构', handbook: '员工手册' }[view]}</strong></div><div class="topbar-right"><span class="game-version"><strong>v${escape(RELEASE.version)} · ${escape(RELEASE.name)}</strong><small>${escape(RELEASE.note)}</small></span><span class="topbar-divider"></span><span class="system-status"><span class="status-dot"></span> 系统运行正常</span><span class="top-avatar">Y</span>${restartButton()}</div></header><main id="main-content" tabindex="-1"><div class="page-heading"><div><span class="eyebrow">EMPLOYEE SURVIVAL SIMULATOR</span><h1>${view === 'work' ? '又是高效运行的一天<span class="heading-period">。</span>' : view === 'team' ? '你的组织，你的生存环境。' : '欢迎阅读生存协议。'}</h1><p>${view === 'work' ? '保持产出。保持对齐。保持不像一个人类。' : 'NEXUS 内部资料 · 仅限授权实例访问'}</p></div><div class="quarter-badge"><span class="quarter-icon">◷</span><div>第 ${q} 季度<small>${state ? `MONTH ${String(state.month).padStart(2, '0')} / 03` : 'AWAITING ONBOARDING'}</small></div></div></div>${view === 'work' ? `<div class="system-banner">${icon('terminal')}<span><strong>系统提示</strong> ${!state ? '候选人档案已创建。接受 Offer 后分配工号。' : state.phase === 'fired' ? '当前实例的访问权限已撤销。你可以重新投递简历。' : state?.phase === 'won' ? 'CEO 权限已激活。欢迎成为这家公司的最高决策者。' : state?.stats.exposure >= 65 ? '你的行为正在引起安全部门注意。请降低暴露，避免精力耗尽。' : '你已被识别为通用型 Agent。请继续保持。'}</span><span class="banner-code">STATUS: ${!state ? 'AWAITING OFFER' : state.phase === 'fired' ? 'REVOKED' : 'UNDETECTED'}</span></div><div class="stats-grid">${statCard('performance', 'chart', `本季保留门槛 ≥ ${targetFor(state || newGame())}`)}${statCard('trust', 'shield', '季度信任低于 25 将被裁员')}${statCard('exposure', 'eye', '达到 100 将立即暴露身份')}${statCard('energy', 'bolt', '精力耗尽会增加暴露风险')}</div><div class="content-grid"><div class="main-column"><div class="section-heading"><h2>${!state ? '欢迎入职' : state.phase === 'playing' ? '你的工作队列' : '系统回执'} <span>${!state ? 'ONBOARDING' : 'TASK INBOX'}</span></h2><span>${state?.phase === 'playing' ? '<span class="pending-dot"></span> 1 项待处理' : employeeId()}</span></div><div id="game-content" aria-live="polite">${main}</div>${activityLog()}</div><aside class="right-column">${careerPanel()}${ibuPanel()}</aside></div>` : view === 'team' ? team() : handbook()}<footer class="page-footer"><span>© NEXUS CORPORATION <span class="footer-dot">·</span> All humans reserved.</span><span>${storageAvailable ? '本地自动存档' : '浏览器存储不可用，关闭页面会丢失进度'} <span class="status-dot ${storageAvailable ? '' : 'storage-error'}"></span></span></footer></main></div>${resetOpen ? resetDialog() : ''}`;
   if (resetOpen) document.querySelector('[data-action="cancel-reset"]').focus();
   else if (focus) document.getElementById('main-content').focus({ preventScroll: true });
 }
@@ -123,15 +135,16 @@ document.addEventListener('click', event => {
   if (button.dataset.view) { view = button.dataset.view; render(true); return; }
   if (button.dataset.choice !== undefined && state?.phase === 'playing') state = choose(state, Number(button.dataset.choice));
   switch (button.dataset.action) {
-    case 'start': case 'restart': state = nextEvent(newGame(Date.now(), employeeId())); resetOpen = false; view = 'work'; break;
+    case 'start': case 'restart': state = nextEvent(newGame(Date.now(), state ? employeeId() : previousEmployeeId)); resetOpen = false; view = 'work'; break;
+    case 'resign': previousEmployeeId = employeeId(); state = null; resetOpen = false; view = 'work'; break;
     case 'advance': state = advance(state); break;
     case 'continue': state = continueQuarter(state); break;
     case 'reset': resetOpen = true; render(); return;
     case 'cancel-reset': resetOpen = false; render(); [...document.querySelectorAll('[data-action="reset"]')].find(button => button.offsetParent)?.focus(); return;
   }
-  if (state) save();
+  save();
   render(true);
-  if (['start', 'restart'].includes(button.dataset.action)) window.scrollTo({ top: 0, left: 0 });
+  if (['start', 'restart', 'resign'].includes(button.dataset.action)) window.scrollTo({ top: 0, left: 0 });
 });
 
 document.addEventListener('keydown', event => {
