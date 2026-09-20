@@ -12,6 +12,34 @@ npm start
 
 访问 http://localhost:3000。可通过 `PORT=8080 npm start` 修改端口。也可以将 `index.html` 和 `src/` 部署到任何静态网站托管服务。
 
+## 部署到 Cloudflare Workers
+
+项目使用 [Workers Static Assets](https://developers.cloudflare.com/workers/static-assets/)，由 Cloudflare 直接托管静态文件，无需运行 `server.js` 或配置数据库。`npm run build` 将网页及其依赖复制到 `dist/`。
+
+在 Cloudflare 的 **Workers & Pages** 中创建 Worker，连接 GitHub 仓库 `xiaoyuin/HumanInc`，配置如下：
+
+| 配置 | 值 |
+| --- | --- |
+| Worker 名称 | `humaninc`（须与 `wrangler.jsonc` 的 `name` 一致） |
+| 生产分支 | `main` |
+| 根目录 | 仓库根目录，保留默认值 |
+| 构建命令 | `npm run build` |
+| 部署命令 | `npx wrangler deploy` |
+
+静态资源目录已在 `wrangler.jsonc` 中设置为 `./dist`，无需另外填写 Pages 的输出目录。Workers Builds 会根据 `package-lock.json` 安装开发依赖中的 Wrangler。部署工具需要 Node.js 22 或以上；Cloudflare 的构建环境请使用满足要求的版本。
+
+如果已经创建了其他名称的 Worker，请同步修改 `wrangler.jsonc` 的 `name`。部署完成后使用控制台给出的 `workers.dev` 地址访问；连接的生产分支后续推送会触发自动部署。[Workers Builds 配置说明](https://developers.cloudflare.com/workers/ci-cd/builds/configuration/)
+
+也可以在本地登录 Cloudflare 后部署：
+
+```sh
+npm ci
+npx wrangler login
+npm run deploy
+```
+
+上线后，游戏存档仍只保存在当前浏览器和域名下；本地开发地址、`workers.dev` 地址与自定义域名的存档互相独立。
+
 ## 玩法
 
 - 每季度 3 次事件，每次选择一个回应；选项提前显示数值变化。

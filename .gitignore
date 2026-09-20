@@ -2,6 +2,7 @@ node_modules/
 artifacts/
 coverage/
 dist/
+.wrangler/
 
 .env
 .env.*
