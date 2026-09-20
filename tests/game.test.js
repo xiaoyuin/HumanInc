@@ -1,5 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
+import { events } from '../src/events.js';
 import { newGame, nextEvent, currentEvent, choose, advance, assess, continueQuarter, targetFor, validSave } from '../src/game.js';
 
 test('onboarding always starts with a playable standup', () => {
@@ -110,6 +111,60 @@ test('event decks are deterministic and have no repeats before exhausted', () =>
   const ids = [state.eventId, ...state.queue];
   assert.equal(new Set(ids).size, ids.length);
   assert.ok(ids.every(id => !['delegation', 'strategy'].includes(id)));
+});
+
+test('expanded event catalog is playable and has enough duties for each rank', () => {
+  assert.equal(events.length, 40);
+  assert.equal(new Set(events.map(event => event.id)).size, events.length);
+  assert.equal(new Set(events.map(event => event.subject)).size, events.length);
+  assert.deepEqual([0, 1, 2, 3, 4].map(level => events.filter(event => (event.minLevel || 0) === level).length), [16, 6, 6, 6, 6]);
+  for (const event of events) {
+    for (const key of ['id', 'subject', 'text', 'quote', 'category', 'sender', 'role', 'avatar']) assert.ok(event[key]?.trim(), `${event.id}: missing ${key}`);
+    assert.equal(event.options.length, 3);
+    for (const option of event.options) {
+      assert.ok(option.title && option.detail && option.result);
+      assert.deepEqual(Object.keys(option.effects).sort(), ['energy', 'exposure', 'performance', 'trust']);
+      assert.ok(Object.values(option.effects).every(Number.isFinite));
+    }
+  }
+});
+
+test('full careers have no repeated events and at least three current-rank duties per promotion', () => {
+  for (let seed = 1; seed <= 50; seed++) {
+    let state = nextEvent(newGame(seed));
+    const seen = new Set();
+    const rankDuties = [0, 0, 0, 0, 0];
+    for (let turn = 0; turn < 30; turn++) {
+      const event = currentEvent(state);
+      assert.ok(!seen.has(event.id), `${seed}: repeated ${event.id}`);
+      seen.add(event.id);
+      assert.ok((event.minLevel || 0) <= state.level, `Premature unlock: ${event.id}`);
+      if (event.minLevel === state.level) rankDuties[state.level]++;
+      // Isolate scheduling here; the separate real-choice test checks balance.
+      state.stats = { performance: 100, trust: 100, energy: 100, exposure: 0 };
+      state = advance(choose(state, 0));
+      if (state.phase === 'assessment') state = continueQuarter(state);
+    }
+    assert.equal(state.phase, 'won');
+    assert.ok(rankDuties.slice(1).every(count => count >= 3), `${seed}: ${rankDuties}`);
+  }
+});
+
+test('older saves retain progress and exclude previously played subjects from future draws', () => {
+  let state = choose(nextEvent(newGame(42)), 0);
+  delete state.history[0].eventId;
+  state.queue = ['standup', 'captcha'];
+  state = JSON.parse(JSON.stringify(state));
+  assert.equal(validSave(state), true);
+  const next = advance(state);
+  assert.equal(next.quarter, 1);
+  assert.equal(next.month, 2);
+  assert.equal(next.stats.performance, 55);
+  assert.equal(next.eventId, 'captcha');
+  assert.ok(!next.queue.includes('standup'));
+  assert.ok(next.queue.includes('camera'));
+  assert.ok(!next.queue.includes('ceo_shortlist'));
+  assert.equal(validSave(next), true);
 });
 
 // Explore real decisions across each quarter to verify a viable route to CEO

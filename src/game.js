@@ -17,17 +17,28 @@ function random(state) {
 export function nextEvent(state) {
   if (state.phase !== 'playing' || state.eventId) return state;
   const next = structuredClone(state);
-  if (!next.queue.length) {
-    next.queue = events.filter(event => (event.minLevel || 0) <= next.level).map(event => event.id);
-    for (let i = next.queue.length - 1; i > 0; i--) {
+  // Older saves stored only subjects; retain their event history as well.
+  const seen = new Set(next.history.map(entry => entry.eventId || events.find(event => event.subject === entry.subject)?.id));
+  const eligible = events.filter(event => (event.minLevel || 0) <= next.level);
+  const unseen = eligible.filter(event => !seen.has(event.id));
+  const pool = unseen.length ? unseen : eligible;
+  next.queue = [...new Set(next.queue)].filter(id => pool.some(event => event.id === id));
+  const added = pool.filter(event => !next.queue.includes(event.id)).map(event => event.id);
+  if (added.length) {
+    for (let i = added.length - 1; i > 0; i--) {
       const j = Math.floor(random(next) * (i + 1));
-      [next.queue[i], next.queue[j]] = [next.queue[j], next.queue[i]];
+      [added[i], added[j]] = [added[j], added[i]];
     }
-    if (next.quarter === 1 && next.month === 1) {
-      next.queue = ['standup', ...next.queue.filter(id => id !== 'standup')];
-    }
+    next.queue.push(...added);
   }
-  next.eventId = next.queue.shift();
+  let index = 0;
+  if (next.quarter === 1 && next.month === 1) {
+    index = next.queue.indexOf('standup');
+  } else if (next.level > 0 && (next.tenure * 3 + next.month - 1) % 2 === 0) {
+    // Three of each rank's six turns prioritize its newly unlocked duties.
+    index = next.queue.findIndex(id => events.find(event => event.id === id).minLevel === next.level);
+  }
+  [next.eventId] = next.queue.splice(Math.max(0, index), 1);
   return next;
 }
 
@@ -47,7 +58,7 @@ export function choose(state, index) {
     next.stats.performance = clamp(next.stats.performance - 10);
   }
   next.lastResult = { title: choice.title, text: choice.result, effects: choice.effects, exhausted };
-  next.history.unshift({ quarter: state.quarter, month: state.month, subject: event.subject, choice: choice.title, result: choice.result });
+  next.history.unshift({ eventId: event.id, quarter: state.quarter, month: state.month, subject: event.subject, choice: choice.title, result: choice.result });
   next.eventId = null;
   next.phase = 'result';
   if (next.stats.exposure >= 100) {
