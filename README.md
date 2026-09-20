@@ -52,7 +52,7 @@ npm run deploy
 
 分享主地址为 `https://humaninc.pages.dev/`。页面初始 HTML 中包含 Open Graph 和 Twitter Card 标题、描述，以及绿色 **hi** 方形分享图。浏览器图标提供 SVG、PNG、ICO 和 Apple Touch Icon，均为可直接访问的独立文件。
 
-- `public/favicon.svg` 是图标的矢量源文件。
+- `public/favicon.svg` 是图标的矢量源文件，主页左上角和浏览器矢量图标共用此文件。
 - `public/assets/hi.png` 是 512 × 512 的分享图；其他 PNG 和 ICO 是其缩小版本。
 - `npm run build` 会将 `public/` 的内容复制到 `dist/` 根目录。
 - 如需使用其他分享主域名，在构建环境设置 `SITE_URL`（例如 `https://example.com`）；构建会同步替换 canonical、Open Graph 和分享图的域名。
