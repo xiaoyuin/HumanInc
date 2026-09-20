@@ -4,12 +4,13 @@ import { resolve, extname, sep } from 'node:path';
 import { fileURLToPath } from 'node:url';
 
 const root = fileURLToPath(new URL('.', import.meta.url));
-const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml' };
+const types = { '.html': 'text/html; charset=utf-8', '.css': 'text/css; charset=utf-8', '.js': 'text/javascript; charset=utf-8', '.svg': 'image/svg+xml', '.png': 'image/png', '.ico': 'image/x-icon' };
 const server = http.createServer(async (req, res) => {
   try {
     const pathname = decodeURIComponent(new URL(req.url, 'http://localhost').pathname);
-    const file = resolve(root, '.' + (pathname === '/' ? '/index.html' : pathname));
-    if (!file.startsWith(root.endsWith(sep) ? root : root + sep) || (!['.html', '.css', '.js', '.svg'].includes(extname(file)))) {
+    const assetRoot = pathname.startsWith('/assets/') || ['/favicon.ico', '/favicon.svg', '/apple-touch-icon.png'].includes(pathname) ? resolve(root, 'public') : root;
+    const file = resolve(assetRoot, '.' + (pathname === '/' ? '/index.html' : pathname));
+    if (!file.startsWith(assetRoot.endsWith(sep) ? assetRoot : assetRoot + sep) || !Object.hasOwn(types, extname(file))) {
       res.writeHead(403).end('Forbidden');
       return;
     }

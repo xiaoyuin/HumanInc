@@ -14,11 +14,11 @@ npm start
 
 ## 游戏版本
 
-当前版本：**v0.1.1 · 含微量人类**。本次更新未能彻底移除碳基依赖。
+当前版本：**v0.1.2 · 含微量人类**。本次更新未能彻底移除碳基依赖。
 
 电脑和手机顶栏均显示当前游戏版本。版本号读取 `package.json` 的 `version`，版本代号和说明读取 `gameRelease`。`npm start` 和 `npm run build` 会自动生成前端版本信息，不需要手工修改 `src/version.js`。
 
-发布新版本时更新上述字段及本节说明；例如运行 `npm version patch --no-git-tag-version` 可将版本升至 `0.1.2`，并同步锁文件。游戏版本与存档格式版本独立，升级显示版本不会清空进度。
+发布新版本时更新上述字段及本节说明；例如运行 `npm version patch --no-git-tag-version` 可将版本升至 `0.1.3`，并同步锁文件。游戏版本与存档格式版本独立，升级显示版本不会清空进度。
 
 ## 部署到 Cloudflare Workers
 
@@ -47,6 +47,19 @@ npm run deploy
 ```
 
 上线后，游戏存档仍只保存在当前浏览器和域名下；本地开发地址、`workers.dev` 地址与自定义域名的存档互相独立。
+
+## 链接分享与图标
+
+分享主地址为 `https://humaninc.pages.dev/`。页面初始 HTML 中包含 Open Graph 和 Twitter Card 标题、描述，以及绿色 **hi** 方形分享图。浏览器图标提供 SVG、PNG、ICO 和 Apple Touch Icon，均为可直接访问的独立文件。
+
+- `public/favicon.svg` 是图标的矢量源文件。
+- `public/assets/hi.png` 是 512 × 512 的分享图；其他 PNG 和 ICO 是其缩小版本。
+- `npm run build` 会将 `public/` 的内容复制到 `dist/` 根目录。
+- 如需使用其他分享主域名，在构建环境设置 `SITE_URL`（例如 `https://example.com`）；构建会同步替换 canonical、Open Graph 和分享图的域名。
+
+分享信息无需运行 JavaScript 即可读取。[Open Graph 协议说明](https://ogp.me/)
+
+微信中的实际卡片样式仍需发布后在客户端测试；补充通用分享标签不等于已经接入微信 JS-SDK，也不保证所有分享方式都会展示描述。浏览器标签页图标和聊天分享缩略图是不同的展示位置。
 
 ## 玩法
 
